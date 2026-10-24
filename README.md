@@ -4,7 +4,7 @@ I got tired of uploading my photos to random "free image compressor" sites. You 
 
 PixelPress compresses and converts images entirely in your browser using the Canvas API. No uploads, no accounts, no tracking, no ads. Close the tab and it's like it was never there — because it wasn't, anywhere except your own machine.
 
-**Live:** https://pixelpress-krish-777ls-projects.vercel.app
+**Live:** https://pixelpress-app.vercel.app
 
 ## What it does
 

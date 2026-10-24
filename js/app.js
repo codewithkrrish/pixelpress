@@ -160,6 +160,20 @@ function scheduleReprocess() {
   }, 280);
 }
 
+/**
+ * Extract File objects from a drop/paste DataTransfer. `files` is the fast
+ * path; some browsers (and drags sourced from other apps) expose dragged
+ * files only through `items`, so fall back to getAsFile() there.
+ */
+function filesFromDataTransfer(dt) {
+  if (!dt) return [];
+  if (dt.files?.length) return [...dt.files];
+  return [...(dt.items || [])]
+    .filter((item) => item.kind === "file")
+    .map((item) => item.getAsFile())
+    .filter(Boolean);
+}
+
 async function addFiles(fileList) {
   const files = [...fileList];
   if (!files.length) return;
@@ -382,23 +396,43 @@ function init() {
   for (const evt of ["dragenter", "dragover"]) {
     els.dropzone.addEventListener(evt, (e) => {
       stop(e);
+      // Without dropEffect, some browsers show a "not allowed" cursor over the
+      // zone even though the drop itself would be accepted.
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
       els.dropzone.classList.add("is-dragover");
     });
   }
-  for (const evt of ["dragleave", "drop"]) {
-    els.dropzone.addEventListener(evt, (e) => {
-      stop(e);
-      els.dropzone.classList.remove("is-dragover");
-    });
-  }
+  els.dropzone.addEventListener("dragleave", (e) => {
+    stop(e);
+    // Moving across the zone's children (icon, heading, text) fires dragleave
+    // on the zone itself. Only clear the highlight when the drag has genuinely
+    // left the zone — relatedTarget says where it went.
+    if (e.relatedTarget && els.dropzone.contains(e.relatedTarget)) return;
+    els.dropzone.classList.remove("is-dragover");
+  });
   els.dropzone.addEventListener("drop", (e) => {
-    const files = e.dataTransfer?.files;
-    if (files?.length) addFiles(files);
+    stop(e);
+    els.dropzone.classList.remove("is-dragover");
+    document.body.classList.remove("is-dragging");
+    const files = filesFromDataTransfer(e.dataTransfer);
+    if (files.length) addFiles(files);
   });
 
-  // Dragging anywhere over the window should not navigate away from the page.
+  // Dragging anywhere over the window should not navigate away from the page,
+  // and a drop anywhere on the page is accepted — users aim at the page, not
+  // always precisely at the zone. (Drops on the zone itself never reach this
+  // handler: the zone's own drop listener stops propagation.)
+  window.addEventListener("dragenter", () => document.body.classList.add("is-dragging"));
+  window.addEventListener("dragleave", (e) => {
+    if (!e.relatedTarget) document.body.classList.remove("is-dragging");
+  });
   window.addEventListener("dragover", (e) => e.preventDefault());
-  window.addEventListener("drop", (e) => e.preventDefault());
+  window.addEventListener("drop", (e) => {
+    e.preventDefault();
+    document.body.classList.remove("is-dragging");
+    const files = filesFromDataTransfer(e.dataTransfer);
+    if (files.length) addFiles(files);
+  });
   document.addEventListener("paste", (e) => {
     const files = [...(e.clipboardData?.files || [])];
     if (files.length) addFiles(files);

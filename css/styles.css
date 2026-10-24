@@ -92,7 +92,10 @@ img { display: block; max-width: 100%; }
 }
 .dropzone:hover, .dropzone:focus-visible { border-color: var(--accent); background: #16161e; }
 .dropzone:focus-visible { box-shadow: 0 0 0 3px var(--accent-dim); }
-.dropzone.is-dragover { border-color: var(--accent); background: var(--accent-dim); transform: scale(1.005); }
+/* No transform here: scaling the zone mid-drag moves its edges under the
+   pointer, which makes the browser thrash dragenter/dragleave. */
+.dropzone.is-dragover { border-color: var(--accent); background: var(--accent-dim); }
+body.is-dragging .dropzone { border-color: var(--accent); border-style: dashed; }
 .dropzone-icon {
   width: 52px; height: 52px; margin: 0 auto 1rem; border-radius: 14px; background: var(--bg);
   border: 1px solid var(--border); display: grid; place-items: center; color: var(--accent);

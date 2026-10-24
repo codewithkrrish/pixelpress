@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelPress — Free Image Compressor &amp; Converter, No Uploads</title>
+  <meta name="description" content="Compress and convert JPG, PNG, WebP, GIF and BMP images right in your browser. No uploads, no sign-up, no ads. Your files never leave your device." />
+  <meta name="theme-color" content="#0B0B0F" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://github.com/codewithkrrish/pixelpress" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="PixelPress — Compress and convert images in your browser" />
+  <meta property="og:description" content="No uploads. No sign-up. No ads. Compress JPG, PNG and WebP images locally on your device with PixelPress." />
+  <meta property="og:site_name" content="PixelPress" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="PixelPress — Browser Image Compressor" />
+  <meta name="twitter:description" content="Compress and convert images right in your browser. Your files never leave your device." />
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- JSZip powers the "Download all as ZIP" path. app.js checks for it and
+       falls back to sequential downloads if this CDN is unreachable. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./" aria-label="PixelPress home">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>PixelPress</span>
+      </a>
+      <nav class="header-nav" aria-label="Primary">
+        <a href="#tool">Compressor</a>
+        <a href="#how">How it works</a>
+        <a class="btn-github" href="https://github.com/codewithkrrish/pixelpress" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <span class="eyebrow">100% in your browser</span>
+      <h1>Compress images.<br /><span>Nothing leaves your device.</span></h1>
+      <p>Compress and convert images right in your browser. No uploads. No sign-up. No ads.</p>
+      <ul class="hero-points">
+        <li>Private by design</li>
+        <li>Batch processing</li>
+        <li>JPEG, PNG &amp; WebP output</li>
+        <li>Free, forever</li>
+      </ul>
+    </section>
+
+    <section class="tool-section container" id="tool" aria-label="Image compressor">
+      <p class="section-label">Dropzone</p>
+      <div
+        class="dropzone"
+        id="dropzone"
+        tabindex="0"
+        role="button"
+        aria-label="Add images. Press Enter to browse, or drag and drop image files here."
+      >
+        <div class="dropzone-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg>
+        </div>
+        <h2>Drag and drop images here</h2>
+        <p>or <span class="browse">browse from your device</span> — you can also paste with Ctrl+V</p>
+        <p class="dropzone-formats">JPG &nbsp;·&nbsp; PNG &nbsp;·&nbsp; WebP &nbsp;·&nbsp; GIF &nbsp;·&nbsp; BMP</p>
+        <input
+          class="visually-hidden"
+          type="file"
+          id="fileInput"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,.jpg,.jpeg,.png,.webp,.gif,.bmp"
+          multiple
+          tabindex="-1"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div class="controls" aria-label="Compression settings">
+        <p class="section-label">Settings</p>
+        <div class="controls-grid">
+          <div class="field">
+            <label for="formatSelect">Output format</label>
+            <select id="formatSelect">
+              <option value="keep">Keep original</option>
+              <option value="jpeg" selected>JPEG — smallest for photos</option>
+              <option value="webp">WebP — modern, very efficient</option>
+              <option value="png">PNG — lossless</option>
+            </select>
+            <p class="field-hint">WebP usually wins on size. JPEG is the safest for sharing.</p>
+          </div>
+
+          <fieldset class="field">
+            <legend id="qualityLegend">Quality</legend>
+            <div class="quality-row">
+              <input type="range" id="qualityRange" min="10" max="100" step="1" value="80" aria-labelledby="qualityLegend" />
+              <span class="quality-value" id="qualityValue">80%</span>
+            </div>
+            <p class="field-hint" id="qualityHint">Lower quality means a smaller file. 75–85 is a good balance for photos.</p>
+          </fieldset>
+
+          <div class="field">
+            <label for="maxWidthInput">Max width <span style="color: var(--text-faint); font-weight: 400;">(optional, px)</span></label>
+            <input type="number" id="maxWidthInput" min="1" inputmode="numeric" placeholder="e.g. 1920 — leave blank to keep size" />
+            <p class="field-hint">Height adjusts automatically. Images are never upscaled.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-toolbar" id="resultsToolbar">
+        <div class="stats" id="stats" aria-live="polite"></div>
+        <div class="toolbar-actions">
+          <button class="btn btn-ghost btn-small" type="button" id="clearAllBtn">Clear all</button>
+          <button class="btn btn-primary btn-small" type="button" id="downloadAllBtn" disabled>Download all</button>
+        </div>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <h3>No images yet</h3>
+        <p>Add a few images above and your compressed results will appear here, ready to compare and download.</p>
+      </div>
+
+      <div class="results-grid" id="resultsGrid" aria-live="polite"></div>
+
+      <p class="small-print">
+        Animated GIFs are compressed as a still first frame, because the browser canvas cannot re-encode
+        an animation. Transparent images converted to JPEG are flattened onto a white background,
+        since JPEG does not support transparency.
+      </p>
+    </section>
+
+    <section class="features container" id="how">
+      <p class="section-label">How it works</p>
+      <div class="features-grid">
+        <article class="feature">
+          <h3>Private by design</h3>
+          <p>PixelPress decodes and re-encodes everything with your browser's Canvas API. There is no server upload, so there is nothing to leak, store, or wait for in a queue.</p>
+        </article>
+        <article class="feature">
+          <h3>Built for batches</h3>
+          <p>Drop in a whole folder of images, tune one set of controls, and download everything as a single ZIP. Change the quality and every image updates automatically.</p>
+        </article>
+        <article class="feature">
+          <h3>Honest before &amp; after</h3>
+          <p>Click any result to drag a comparison slider between the original and the compressed version, with exact sizes shown — so you can judge the trade-off yourself.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>Built by <a href="https://github.com/codewithkrrish" target="_blank" rel="noopener noreferrer">krrish</a> · <a href="https://github.com/codewithkrrish/pixelpress" target="_blank" rel="noopener noreferrer">PixelPress on GitHub</a></div>
+      <div class="footer-note">Your images are processed locally and never uploaded.</div>
+    </div>
+  </footer>
+
+  <!-- Comparison modal -->
+  <div class="modal-backdrop" id="compareModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Before and after comparison">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" data-modal-title>Image</h2>
+          <p class="modal-sub" data-modal-sub></p>
+        </div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Close comparison">×</button>
+      </div>
+
+      <div class="compare-wrap" data-compare-wrap>
+        <span class="compare-label is-left">Compressed</span>
+        <span class="compare-label is-right">Original</span>
+        <img data-compare-original alt="Original image" />
+        <div class="compare-after" data-compare-after>
+          <img data-compare-compressed alt="Compressed image" />
+        </div>
+        <div class="compare-divider" data-compare-divider style="left: 50%;"></div>
+        <button class="compare-handle" type="button" data-compare-handle style="left: 50%;" aria-label="Comparison slider handle">↔</button>
+      </div>
+      <input class="compare-range" type="range" min="0" max="100" value="50" data-compare-range aria-label="Comparison slider" />
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" type="button" id="modalDownloadBtn">Download compressed</button>
+        <button class="btn btn-secondary" type="button" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+</body>
+</html>

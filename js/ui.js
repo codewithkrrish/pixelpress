@@ -231,7 +231,7 @@ export class CompareModal {
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && this.backdrop.classList.contains("is-open")) this.close();
     });
-    root.querySelectorAll("[data-close-modal]").forEach((btn) => btn.addEventListener("click", () => this.close()));
+    this.root.querySelectorAll("[data-close-modal]").forEach((btn) => btn.addEventListener("click", () => this.close()));
   }
 
   setPosition(pct) {

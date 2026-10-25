@@ -260,9 +260,10 @@ function removeEntry(id) {
   if (!entry) return;
   if (modal && modal.entryId === id) modal.close();
   revokeEntryUrls(entry);
+  // processEntry's membership check discards this entry's pending result without
+  // invalidating the batch token needed by other images still being processed.
   entries.delete(id);
   cardFor(entry)?.remove();
-  runToken += 1; // Invalidate any in-flight result for the removed entry.
   refreshChrome();
 }
 

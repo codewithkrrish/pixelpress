@@ -254,6 +254,68 @@ test("removing an image closes its comparison and revokes each distinct URL exac
   assert.deepEqual(browser.revokedUrls, urls);
 });
 
+for (const succeeds of [true, false]) {
+  test(`removing a processing image preserves another image's ${succeeds ? "successful result" : "encoding error"}`, async (t) => {
+    const browser = await loadApp(t);
+    const pending = [];
+    browser.encode.mock.mockImplementation((callback, mime) => pending.push({ callback, mime }));
+    browser.selectFiles([browser.file("remove.png"), browser.file("keep.png")]);
+    await waitFor(() => pending.length === 2);
+    const [removed, remaining] = browser.window.__pixelpress.entries.values();
+    const removedUrl = removed.originalUrl;
+    const [removedCard, remainingCard] = browser.document.querySelectorAll(".card");
+    removedCard.querySelector(".icon-btn").click();
+
+    // The removed entry's late result must not create an output URL or revive its card.
+    pending[0].callback(new Blob(["removed"], { type: pending[0].mime }));
+    await settle();
+    assert.equal(browser.window.__pixelpress.entries.has(removed.id), false);
+    assert.equal(browser.document.querySelectorAll(".card").length, 1);
+    assert.equal(removed.outputUrl, null);
+    assert.equal(browser.createdUrls.length, 2);
+    assert.deepEqual(browser.revokedUrls, [removedUrl]);
+
+    const blob = succeeds ? new Blob(["remaining"], { type: pending[1].mime }) : null;
+    pending[1].callback(blob);
+    await settle();
+    assert.equal(remaining.status, succeeds ? "done" : "error");
+    assert.equal(remaining.outputBlob, blob);
+    assert.equal(remainingCard.querySelector(".spinner"), null);
+    assert.equal(remainingCard.querySelector('[data-role="download"]').disabled, !succeeds);
+    assert.equal(browser.document.querySelector("#downloadAllBtn").disabled, !succeeds);
+    if (succeeds) {
+      remainingCard.querySelector('[data-role="download"]').click();
+      assert.deepEqual(browser.downloads, [{ url: remaining.outputUrl, name: "keep-compressed.jpg" }]);
+    } else {
+      assert.match(remainingCard.querySelector('[data-role="status"]').textContent, /could not encode/);
+    }
+    assert.equal(browser.encode.mock.callCount(), 2);
+    assert.equal(browser.bitmaps.every((bitmap) => bitmap.close.mock.callCount() === 1), true);
+  });
+}
+
+test("removing a completed image does not cancel other images still being compressed", async (t) => {
+  const browser = await loadApp(t);
+  const pending = [];
+  browser.encode.mock.mockImplementation((callback, mime) => pending.push({ callback, mime }));
+  browser.selectFiles([browser.file("finished.png"), browser.file("pending.png")]);
+  await waitFor(() => pending.length === 2);
+  const [removed, remaining] = browser.window.__pixelpress.entries.values();
+  pending[0].callback(new Blob(["finished"], { type: pending[0].mime }));
+  await waitFor(() => removed.status === "done");
+  const removedUrls = [removed.originalUrl, removed.outputUrl];
+  browser.document.querySelector(".card .icon-btn").click();
+  assert.deepEqual(browser.revokedUrls, removedUrls);
+
+  pending[1].callback(new Blob(["remaining"], { type: pending[1].mime }));
+  await settle();
+  assert.equal(remaining.status, "done");
+  assert.equal(browser.window.__pixelpress.entries.size, 1);
+  assert.equal(browser.document.querySelectorAll(".card").length, 1);
+  assert.equal(browser.document.querySelector("#downloadAllBtn").disabled, false);
+  assert.equal(browser.encode.mock.callCount(), 2);
+});
+
 test("clearing a running batch discards late compression results without creating output URLs", async (t) => {
   const browser = await loadApp(t);
   const pending = [];
